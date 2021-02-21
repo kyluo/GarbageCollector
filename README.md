@@ -3,9 +3,9 @@
 Define a struct
 ``
 typedef struct {
-    // Number of bytes this piece of memory holds (excluding the metadata size <br />
-    size_t size; <br />
-    // Pointer to the next instance of meta_data in the list <br />
+    // Number of bytes this piece of memory holds (excluding the metadata size)__
+    size_t size;__
+    // Pointer to the next instance of meta_data in the list__
     struct _meta_data *next; <br />
     // The flag for sweep <br />
     int marked; <br />
