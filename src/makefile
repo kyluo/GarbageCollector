@@ -1,7 +1,7 @@
-OBJS	= GarbageCollector.o
-SOURCE	= GarbageCollector.c
+OBJS	= GarbageCollector.o test.o
+SOURCE	= GarbageCollector.c test.c
 HEADER	= GarbageCollector.h
-OUT	= gc
+OUT	= ./test
 CC	 = gcc
 FLAGS	 = -g -c -Wall
 LFLAGS	 = 
@@ -11,6 +11,9 @@ all: $(OBJS)
 
 GarbageCollector.o: GarbageCollector.c
 	$(CC) $(FLAGS) GarbageCollector.c 
+
+test.o: test.c
+	$(CC) $(FLAGS) test.c 
 
 
 clean:
