@@ -28,8 +28,8 @@ goal
 loop through stack from beginning ``top_stack`` untill end (last variable where we call end) to decide if there is unreachable memmory address in heap:
 mark all rechable memory and sweep all unreachable ones
 
-tradeoff
-========
+undecided
+=========
 if data is unreachable:<br/>
 ignore the unreachable memory and malloc new memory as user request<br/>
 or<br/>
