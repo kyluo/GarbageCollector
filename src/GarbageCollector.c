@@ -4,9 +4,8 @@
 #define UNTAG(p) (((unsigned int) (p)) & 0xfffffffc)
 
 void garbage_collect_start(GarbageCollector *gc, void *stack_initial) {
-
+    
 }
-
 
 void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size) {
     new_metadata->size = request_size;
@@ -115,24 +114,24 @@ void gc_free(GarbageCollector* gc, void *ptr) {
     }
 }
 
-/*
- * Scan a region of memory and mark any items in the used list appropriately.
- * Both arguments should be word aligned.
- */
-static void
-scan_region(GarbageCollector* gc, unsigned int *sp, unsigned int *end)
-{
-    metadata *bp;
+void GC_init(GarbageCollector* gc) {
+    static int initted;
 
-    for (; sp < end; sp++) {
-        unsigned int v = *sp;
-        bp = gc->head;
-        do {
-            if (bp + 1 <= v &&
-                bp + 1 + bp->size > v) {
-                    bp->next = ((unsigned int) bp->next) | 1;
-                    break;
-            }
-        } while ((bp = UNTAG(bp->next)) != gc->head);
-    }
+    if (initted) // already initialized
+        return;
+    FILE *statfp;
+    initted = 1;
+
+    statfp = fopen("/proc/self/stat", "r");
+    assert(statfp != NULL);
+    fscanf(statfp,
+           "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
+           "%*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld "
+           "%*ld %*ld %*ld %*ld %*llu %*lu %*ld "
+           "%*lu %*lu %*lu %lu", &gc->stack_bottom);
+    fclose(statfp);
+    
+    // usedp = NULL;
+    // base.next = freep = &base;
+    // base.size = 0;
 }

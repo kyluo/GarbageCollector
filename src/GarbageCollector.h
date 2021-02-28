@@ -22,7 +22,8 @@ typedef struct {
 
 typedef struct {
     size_t size; 
-    void* top_stack;
+    void* stack_top;
+    void* stack_bottom;
     size_t num_items;
     size_t marked_items;
     metadata* head;
@@ -33,7 +34,8 @@ void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t r
 void *gc_malloc(GarbageCollector* gc, size_t request_size);
 void *gc_calloc(GarbageCollector* gc, size_t num_elements, size_t element_size);
 void *gc_realloc(GarbageCollector* gc, void *ptr, size_t request_size);
-void *gc_free(GarbageCollector* gc, void* ptr);
+void gc_free(GarbageCollector* gc, void* ptr);
+void gc_init(void);
 
 void garbage_collect_start(GarbageCollector *gc, void *stack_initial);
 void sweep(GarbageCollector *gc);
