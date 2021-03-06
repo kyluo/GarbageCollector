@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-// sweeping
-// copywrapper
-int other(special_ptr p) {
 
-    exit();
-
-}
 
 int main () {
     puts("Hello World.");

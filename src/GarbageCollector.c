@@ -1,11 +1,17 @@
 #include "GarbageCollector.h"
 #include <stdio.h>
 #include <string.h>
-#define UNTAG(p) (((unsigned int) (p)) & 0xfffffffc)
+#include <assert.h>
 
-void garbage_collect_start(GarbageCollector *gc, void *stack_initial) {
-    
-}
+/*
+ * The size of a pointer.
+ */
+#define PTRSIZE sizeof(char*)
+
+static metadata base;           /* Zero sized block to get us started. */
+static metadata *freep = &base; /* Points to first free block of memory. */
+static metadata *usedp;   
+static void* stack_bottom;
 
 void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size) {
     new_metadata->size = request_size;
@@ -38,7 +44,7 @@ void *gc_malloc(GarbageCollector* gc, size_t size) {
 
 void *gc_calloc(GarbageCollector* gc, size_t num_elements, size_t element_size) {
     size_t size = num_elements * element_size;
-    void* memory = mini_malloc(gc, size);
+    void* memory = gc_malloc(gc, size);
     if (!memory) // Fail to allocate memory
         return NULL;
 
@@ -51,10 +57,10 @@ void *gc_realloc(GarbageCollector* gc, void *ptr, size_t request_size) {
         return NULL;
     } else if (!ptr) {
         /* If the ptr to reallocate is null it's the same as calling mini_malloc */
-        return mini_malloc(gc, request_size);
+        return gc_malloc(gc, request_size);
     } else if (!request_size) {
         /* treat this like a call to mini_free and return NULL */
-        mini_free(gc, ptr);
+        gc_free(gc, ptr);
         return NULL;
     }
     
@@ -114,7 +120,7 @@ void gc_free(GarbageCollector* gc, void *ptr) {
     }
 }
 
-void GC_init(GarbageCollector* gc) {
+void GC_init() {
     static int initted;
 
     if (initted) // already initialized
@@ -128,26 +134,12 @@ void GC_init(GarbageCollector* gc) {
            "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
            "%*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld "
            "%*ld %*ld %*ld %*ld %*llu %*lu %*ld "
-           "%*lu %*lu %*lu %lu", &gc->stack_bottom);
+           "%*lu %*lu %*lu %lu", &stack_bottom);
     fclose(statfp);
     
-    // usedp = NULL;
-    // base.next = freep = &base;
-    // base.size = 0;
-}
-
-void garbage_collect_start(GarbageCollector *gc, void *stack_initial) {
-    mark(gc);
-    sweep(gc);
-}
-
-void mark(GarbageCollector *gc) {
-
-}
-
-
-void sweep(GarbageCollector *gc) {
-
+    usedp = NULL;
+    base.next = freep = &base; // asign base_next and freep to address of base.
+    base.size = 0;
 }
 
 
