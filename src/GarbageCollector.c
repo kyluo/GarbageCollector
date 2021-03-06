@@ -135,3 +135,20 @@ void GC_init(GarbageCollector* gc) {
     // base.next = freep = &base;
     // base.size = 0;
 }
+
+void garbage_collect_start(GarbageCollector *gc, void *stack_initial) {
+    mark(gc);
+    sweep(gc);
+}
+
+void mark(GarbageCollector *gc) {
+
+}
+
+
+void sweep(GarbageCollector *gc) {
+
+}
+
+
+

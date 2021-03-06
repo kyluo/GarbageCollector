@@ -38,5 +38,5 @@ void gc_free(GarbageCollector* gc, void* ptr);
 void gc_init(void);
 
 void garbage_collect_start(GarbageCollector *gc, void *stack_initial);
-void sweep(GarbageCollector *gc);
 void mark(GarbageCollector *gc);
+void sweep(GarbageCollector *gc);
