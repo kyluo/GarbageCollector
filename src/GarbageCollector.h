@@ -5,6 +5,7 @@
  * */
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 /**
  * 
  * Represents a list of objects allocated by the user
@@ -13,13 +14,17 @@
  * */
 typedef struct metadata {
     // Number of bytes this piece of memory holds (excluding the metadata size)
+    void* memory_ptr;
+    // Number of bytes this piece of memory holds (excluding the metadata size)
     size_t size;
     // Pointer to the next instance of meta_data in the list
     struct metadata *next;
+    // Pointer to the next instance of meta_data in the list
+    struct metadata *prev;
+    // The flag for sweep (1 means in use, 0 means free)
+    int is_free;
     // The flag for sweep (1 means in use, 0 means free)
     int marked;
-    // Corresponding Destructor
-    void (*dtor)(void*);
 } metadata;
 
 typedef struct {
@@ -33,12 +38,24 @@ typedef struct {
 } GarbageCollector;
 
 
-void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size);
-void *gc_malloc(GarbageCollector* gc, size_t request_size);
-void *gc_calloc(GarbageCollector* gc, size_t num_elements, size_t element_size);
-void *gc_realloc(GarbageCollector* gc, void *ptr, size_t request_size);
-void gc_free(GarbageCollector* gc, void* ptr);
-void gc_init(GarbageCollector* gc);
-
-void garbage_collect_start(GarbageCollector *gc, void *stack_initial);
+/////
+void *gc_malloc(size_t size);
+void gc_free(void* ptr);
+void Merge_free_neighbor_memory(metadata *meta_ptr);
+void Merge_prev(metadata *meta_ptr);
+void *gc_calloc(size_t num, size_t size);
+void gc_init();
+static void scan_and_mark_region(unsigned long *sp, unsigned long *end);
+static void add_to_free_list(metadata *target);
+static void scan_and_mark_heap_ref(void);
 void mark_and_sweep(void);
+/////
+// void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size);
+// void *gc_malloc(GarbageCollector* gc, size_t request_size);
+// void *gc_calloc(GarbageCollector* gc, size_t num_elements, size_t element_size);
+// void *gc_realloc(GarbageCollector* gc, void *ptr, size_t request_size);
+// void gc_free(GarbageCollector* gc, void* ptr);
+// void gc_init(GarbageCollector* gc);
+
+// void garbage_collect_start(GarbageCollector *gc, void *stack_initial);
+// void mark_and_sweep(void);

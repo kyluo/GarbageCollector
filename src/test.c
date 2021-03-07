@@ -5,8 +5,8 @@
 int main (int argc, char** argv) {
     puts("Hello World.");
     // I wonder if &argc gives the bottom of the stack.
-    GarbageCollector gc;
-    gc_init(&gc);
+    
+    gc_init();
 
     return 0;
 }
