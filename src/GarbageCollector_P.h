@@ -37,26 +37,6 @@ void* gc_deref(GarbageCollector* gc, reference* ref);
 
 void gc_clean(GarbageCollector* gc); //add scan stack
 
-func1() {
-    reference* reference1 = gc_new_ref(gc);
-    reference1 = gc_malloc();
-
-    return;
-}
-
-func2() {
-    reference2 = gc_new_ref(gc);
-    reference2 = gc_malloc();
-
-    return;
-}
-
-main() {
-    gc = gc_start();
-
-}
-
-
 
 
 

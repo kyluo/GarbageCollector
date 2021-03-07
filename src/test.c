@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include "GarbageCollector.h"
 
-
-int main () {
+int main (int argc, char** argv) {
     puts("Hello World.");
-    // char* p = gc_malloc(11);
-    // char* other_P = p; // Meanwhile add this reference to the reference list in metadata
-    // special_ptr copy_p = copy(p);
-    
+    // I wonder if &argc gives the bottom of the stack.
+    GarbageCollector gc;
+    gc_init(&gc);
+
     return 0;
 }
