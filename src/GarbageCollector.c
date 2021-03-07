@@ -174,8 +174,10 @@ void gc_init() {
 
     initialized = 1;
     FILE *statfp;
-
+    //char path[80];
     statfp = fopen("/proc/self/stat", "r");
+    //snprintf(path, 40, "/proc/%d/stat", (int)getpid()); // Get the right path with pid.
+    //statfp = fopen(path,"r");
     assert(statfp != NULL);
     fscanf(statfp,
            "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
@@ -262,7 +264,7 @@ void mark_and_sweep(void) {
     /* Mark from the heap. */
     scan_and_mark_heap_ref();
 
-    for (current_ptr = head; current_ptr != NULL; current_ptr->next) {
+    for (current_ptr = head; current_ptr != NULL; current_ptr = current_ptr->next) {
         if (!current_ptr->marked) {
             gc_free(current_ptr+1);
             continue;

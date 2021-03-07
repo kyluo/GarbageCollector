@@ -1,6 +1,7 @@
 /**
  *  
  * A simple garbage collector for cs 296-41 project
+ * MUST RUN ON AN LINUX ENVIRONMENT
  * 
  * */
 #include <stdlib.h>
