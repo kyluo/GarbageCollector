@@ -46,10 +46,14 @@ void Merge_free_neighbor_memory(metadata *meta_ptr);
 void Merge_prev(metadata *meta_ptr);
 void *gc_calloc(size_t num, size_t size);
 void gc_init();
-static void scan_and_mark_region(unsigned long *sp, unsigned long *end);
-static void add_to_free_list(metadata *target);
-static void scan_and_mark_heap_ref(void);
+void gc_exit();
+void scan_and_mark_region(unsigned long *sp, unsigned long *end);
+//static void add_to_free_list(metadata *target);
+void scan_and_mark_heap_ref(void);
 void mark_and_sweep(void);
+int get_sbrk_mem();
+metadata* get_head();
+int get_active_mem_include_metadata();
 /////
 // void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size);
 // void *gc_malloc(GarbageCollector* gc, size_t request_size);

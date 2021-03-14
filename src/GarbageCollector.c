@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
-#include <mach-o/getsect.h>
+//#include <mach-o/getsect.h>
 /*
  * The size of a pointer.
  */
@@ -12,20 +12,17 @@
  * Support for windows c compiler is added by adding this macro.
  * Tested on: Microsoft (R) C/C++ Optimizing Compiler Version 19.24.28314 for x86
  */
-#if defined(_MSC_VER)
-#define __builtin_frame_address(x)  ((void)(x), _AddressOfReturnAddress())
-#endif
+// #if defined(_MSC_VER)
+// #define __builtin_frame_address(x)  ((void)(x), _AddressOfReturnAddress())
+// #endif
 
 #define LAST_BIT_MASK(p) ((((uintptr_t) p)  >> 1) << 1) // make last bit 0.
 
-static metadata base;           /* Zero sized block to get us started. */
-static metadata *freep = &base; /* Points to first free block of memory. */
-static metadata *usedp;         /* Points to first used block of memory. */
-static uintptr_t stack_bottom;
-
-static metadata* head = NULL;
+static metadata base;           /* Zero sized block to get us started. */ 
+static metadata* head;  /* Points to first block of allocated memory. */
 static size_t total_sbrk_memory = 0;
 static size_t current_active_memory = 0;
+static uintptr_t stack_bottom;
 
 // Split the memory block into pieces that the user requested and the remaining piece,
 // then make the linked sequence: ... -> remaining -> old -> ...
@@ -60,7 +57,7 @@ void *gc_malloc(size_t size) {
     // implement malloc!
     if (size == 0)
         return NULL;
-    
+    //mark_and_sweep();
     metadata* current_block = head;
     metadata* valid_block_memory = NULL;
     // if there are enough memory available:
@@ -178,15 +175,16 @@ void gc_init() {
     statfp = fopen("/proc/self/stat", "r");
     //snprintf(path, 40, "/proc/%d/stat", (int)getpid()); // Get the right path with pid.
     //statfp = fopen(path,"r");
-    assert(statfp != NULL);
-    fscanf(statfp,
-           "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
-           "%*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld "
-           "%*ld %*ld %*ld %*ld %*llu %*lu %*ld "
-           "%*lu %*lu %*lu %lu", &stack_bottom);
+    // assert(statfp != NULL);
+    // fscanf(statfp,
+    //        "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
+    //        "%*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld "
+    //        "%*ld %*ld %*ld %*ld %*llu %*lu %*ld "
+    //        "%*lu %*lu %*lu %lu", &stack_bottom); // Highest address
+    stack_bottom = __builtin_return_address(0);
     fclose(statfp);
-    usedp = NULL;
-    base.next = freep = &base; // asign base_next and freep to address of base.
+    head = NULL;
+    base.next = &base; 
     base.size = 0;
 }
 
@@ -195,17 +193,21 @@ void gc_init() {
  * Scan a region of memory and mark any items in the used list appropriately.
  * Both arguments should be word aligned.
  */
-static void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
+void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
+    if (head == NULL)
+        return;
     metadata *current_ptr = head;
+    printf("Stack begin: %p, end: %p\n", sp, end);
     // for each addresses (each 8 byte), see if the value pointed by it matches one in the used list.
     for (; sp < end; sp++) {
         current_ptr = head;
-        unsigned long stack_value = *sp; // 取到sp指向的地址的值
+        //unsigned long stack_value = *sp; // 取到sp指向的地址的值
+        unsigned long stack_value = 0;
         while (current_ptr) {
             // If the stack value is an address between current_ptr's memory, mark it.
             if ((uintptr_t)(current_ptr + 1) <= stack_value && stack_value < (uintptr_t)(current_ptr + 1 + current_ptr->size)) {
                 current_ptr->marked = 1;
-                break;;
+                break;
             }
             current_ptr = current_ptr->next;
         }
@@ -215,7 +217,7 @@ static void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
 /*
  * Scan the marked blocks for references to other unmarked blocks.
  */
-static void scan_and_mark_heap_ref(void) {
+void scan_and_mark_heap_ref(void) {
     unsigned long *word; // was orginall unsigned int*
     metadata *current, *other_heap;
 
@@ -224,11 +226,12 @@ static void scan_and_mark_heap_ref(void) {
             continue;
         // for each word in the current memory block (starting after metadata section), see if the value correspond to another
         // address in the heap, if it is, mark it.
+        
         for (word = (unsigned long *)(current + 1);
              word < (unsigned long *)(current + current->size + 1);
              word++) {
-            unsigned int address = *word; // get current word's value
-            other_heap = current->next;
+            unsigned long address = *word; // get current word's value
+            other_heap = head;
             do {
                 // If address is in another heap mem block, mark it. We found a ref to other unmarked blocks.
                 if (other_heap != current &&
@@ -236,8 +239,8 @@ static void scan_and_mark_heap_ref(void) {
                     address < (unsigned long)(other_heap + 1 + other_heap->size)) {
                     other_heap->marked = 1; // up->next = (metadata*) (((uintptr_t) up->next) | 1);
                     break;
-                } ////TODO: make the linked list wrapped around at the end.
-            } while ((other_heap = other_heap->next) != current); // Continue loop until hit current
+                } 
+            } while ((other_heap = other_heap->next) != NULL); // Continue loop until hit current
         }
     }
 }
@@ -247,23 +250,24 @@ void mark_and_sweep(void) {
     void* stack_top;
     extern char end, etext; /* Provided by the linker. */
 
-    if (usedp == NULL)
+    if (head == NULL)
         return;
-
+    
     /* Scan the BSS and initialized data segments. */
-    //scan_region(&etext, &end);
-    scan_and_mark_region((unsigned long*)get_etext(), (unsigned long*)get_end());
+    scan_and_mark_region(&etext, &end);
+    //scan_and_mark_region((unsigned long*)get_etext(), (unsigned long*)get_end());
 
 
     /* Scan the stack. */
     //asm volatile ("movl %%ebp, %0" : "=r" (stack_top));
-    stack_top = __builtin_frame_address(0);
+    stack_top = __builtin_return_address(0); // LOWEST
     //stack_top = 0;
     scan_and_mark_region((unsigned long*) stack_top, (unsigned long*) stack_bottom);
 
     /* Mark from the heap. */
     scan_and_mark_heap_ref();
-
+    
+    /* Sweep */
     for (current_ptr = head; current_ptr != NULL; current_ptr = current_ptr->next) {
         if (!current_ptr->marked) {
             gc_free(current_ptr+1);
@@ -271,4 +275,20 @@ void mark_and_sweep(void) {
         }
         current_ptr->marked = 0;
     }
+}
+
+void gc_exit() {
+    mark_and_sweep();
+}
+
+int get_sbrk_mem() {
+    return total_sbrk_memory;
+}
+
+metadata* get_head() {
+    return head;
+}
+
+int get_active_mem_include_metadata() {
+    return current_active_memory;
 }
