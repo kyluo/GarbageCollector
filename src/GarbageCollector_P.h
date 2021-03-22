@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <vector.h>
+#include "vector.h"
 
 typedef struct {
     vector* _refs;
@@ -35,26 +35,7 @@ void* gc_malloc(GarbageCollector* gc, reference* ref, size_t request_size);
 void* gc_calloc(GarbageCollector* gc, reference* ref, size_t num_elements, size_t element_size);
 void* gc_deref(GarbageCollector* gc, reference* ref);
 
-void gc_clean(GarbageCollector* gc); //add scan stack
-
-func1() {
-    reference* reference1 = gc_new_ref(gc);
-    reference1 = gc_malloc();
-
-    return;
-}
-
-func2() {
-    reference2 = gc_new_ref(gc);
-    reference2 = gc_malloc();
-
-    return;
-}
-
-main() {
-    gc = gc_start();
-
-}
+void gc_clean(GarbageCollector* gc);
 
 
 
