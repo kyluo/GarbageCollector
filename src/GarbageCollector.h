@@ -54,6 +54,8 @@ void mark_and_sweep(void);
 int get_sbrk_mem();
 metadata* get_head();
 int get_active_mem_include_metadata();
+void* get_stack_bottom();
+void* gethead();
 /////
 // void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size);
 // void *gc_malloc(GarbageCollector* gc, size_t request_size);

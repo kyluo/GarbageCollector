@@ -23,6 +23,7 @@ static metadata* head;  /* Points to first block of allocated memory. */
 static size_t total_sbrk_memory = 0;
 static size_t current_active_memory = 0;
 static uintptr_t stack_bottom;
+static void* heap_begin;
 
 // Split the memory block into pieces that the user requested and the remaining piece,
 // then make the linked sequence: ... -> remaining -> old -> ...
@@ -89,6 +90,7 @@ void *gc_malloc(size_t size) {
         head->size = size;
         head->is_free = 0;
         valid_block_memory = head;
+        head->next = NULL;
         current_active_memory += head->size;
       } else {
         valid_block_memory = sbrk(sizeof(metadata)+size);
@@ -109,7 +111,7 @@ void *gc_malloc(size_t size) {
         current_active_memory += sizeof(metadata)+size;
       }
     }
-
+    valid_block_memory->marked = 0;
     return valid_block_memory->memory_ptr;
 }
 
@@ -130,7 +132,7 @@ void Merge_free_neighbor_memory(metadata *meta_ptr) {
     // If previous is free, merge it.
     if (meta_ptr->prev && meta_ptr->prev->is_free == 1) {
         Merge_prev(meta_ptr);
-        current_active_memory -= sizeof(metadata);// Remember to decrement the metadata size as well
+        current_active_memory -= sizeof(metadata); // Remember to decrement the metadata size as well
     }
     // If next block is free, merge it.
     if (meta_ptr->next && meta_ptr->next->is_free == 1) {
@@ -147,8 +149,10 @@ void Merge_free_neighbor_memory(metadata *meta_ptr) {
 
 void gc_free(void *ptr) {
     if (ptr == NULL) return;
+    printf("value of ptr being freed is: %p\n",ptr);
     metadata *meta_ptr = (metadata*) ptr - 1;
-    assert(meta_ptr->is_free == 0); // Check that it must not be freed first
+    if (meta_ptr->is_free == 1)
+        return;
     meta_ptr->is_free = 1;
     current_active_memory -= meta_ptr->size;
     Merge_free_neighbor_memory(meta_ptr); //
@@ -169,23 +173,24 @@ void gc_init() {
     if (initialized)
         return;
 
+    heap_begin = sbrk(0);
     initialized = 1;
     FILE *statfp;
-    //char path[80];
     statfp = fopen("/proc/self/stat", "r");
-    //snprintf(path, 40, "/proc/%d/stat", (int)getpid()); // Get the right path with pid.
     //statfp = fopen(path,"r");
-    // assert(statfp != NULL);
-    // fscanf(statfp,
-    //        "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
-    //        "%*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld "
-    //        "%*ld %*ld %*ld %*ld %*llu %*lu %*ld "
-    //        "%*lu %*lu %*lu %lu", &stack_bottom); // Highest address
-    stack_bottom = __builtin_return_address(0);
+    assert(statfp != NULL);
+    fscanf(statfp,
+           "%*d %*s %*c %*d %*d %*d %*d %*d %*u "
+           "%*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld "
+           "%*ld %*ld %*ld %*ld %*llu %*lu %*ld "
+           "%*lu %*lu %*lu %lu", &stack_bottom); // Highest address
+    
     fclose(statfp);
+    
     head = NULL;
     base.next = &base; 
     base.size = 0;
+    printf("heap_ begin:%p\n", heap_begin);
 }
 
 //////////******
@@ -197,15 +202,20 @@ void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
     if (head == NULL)
         return;
     metadata *current_ptr = head;
-    printf("Stack begin: %p, end: %p\n", sp, end);
+    sp = ((uintptr_t)sp >> 3) << 3;
+    //printf("Stack begin: %p, end: %p\n", sp, end);
+    
     // for each addresses (each 8 byte), see if the value pointed by it matches one in the used list.
     for (; sp < end; sp++) {
+        //printf("current stack address: %p\n", sp);
         current_ptr = head;
         //unsigned long stack_value = *sp; // 取到sp指向的地址的值
-        unsigned long stack_value = 0;
+        unsigned long stack_value = *sp;
         while (current_ptr) {
             // If the stack value is an address between current_ptr's memory, mark it.
             if ((uintptr_t)(current_ptr + 1) <= stack_value && stack_value < (uintptr_t)(current_ptr + 1 + current_ptr->size)) {
+                printf("The sp value: %p\n", sp);
+                printf("The stack value: %p\n", (void*) stack_value);
                 current_ptr->marked = 1;
                 break;
             }
@@ -248,20 +258,22 @@ void scan_and_mark_heap_ref(void) {
 void mark_and_sweep(void) {
     metadata *current_ptr, *prevp, *tp;
     void* stack_top;
-    extern char end, etext; /* Provided by the linker. */
+    extern char end, etext, edata; /* Provided by the linker. */
 
     if (head == NULL)
         return;
     
     /* Scan the BSS and initialized data segments. */
-    scan_and_mark_region(&etext, &end);
+    // scan_and_mark_region(&etext, &edata);
     //scan_and_mark_region((unsigned long*)get_etext(), (unsigned long*)get_end());
 
 
     /* Scan the stack. */
-    //asm volatile ("movl %%ebp, %0" : "=r" (stack_top));
-    stack_top = __builtin_return_address(0); // LOWEST
-    //stack_top = 0;
+    asm volatile ("movq %%rbp, %0" : "=r" (stack_top)); // Current LOWEST STACK ADDRESS
+    //stack_top = __builtin_return_address(0); 
+
+    printf("The current stack top address outside the test function and inside our mark-and-sweep: %p\n", stack_top);
+    printf("The current stack bottom address outside the test function and inside our mark-and-sweep: %p\n", stack_bottom);
     scan_and_mark_region((unsigned long*) stack_top, (unsigned long*) stack_bottom);
 
     /* Mark from the heap. */
@@ -270,7 +282,8 @@ void mark_and_sweep(void) {
     /* Sweep */
     for (current_ptr = head; current_ptr != NULL; current_ptr = current_ptr->next) {
         if (!current_ptr->marked) {
-            gc_free(current_ptr+1);
+            printf("Current header memory is: %p\n", current_ptr->memory_ptr);
+            gc_free(current_ptr->memory_ptr);
             continue;
         }
         current_ptr->marked = 0;
@@ -279,6 +292,7 @@ void mark_and_sweep(void) {
 
 void gc_exit() {
     mark_and_sweep();
+    sbrk(-1 * total_sbrk_memory);
 }
 
 int get_sbrk_mem() {
@@ -291,4 +305,12 @@ metadata* get_head() {
 
 int get_active_mem_include_metadata() {
     return current_active_memory;
+}
+
+void* get_stack_bottom() {
+    return stack_bottom;
+}
+
+void* gethead() {
+    return (head->memory_ptr);
 }
