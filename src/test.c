@@ -85,13 +85,9 @@ int test_heap_reference() {
 }
 
 int main (int argc, char** argv) {
-    /// void* initial_heap_address = sbrk(0);
     gc_init();
 
-    // test_heap_reference();
-    // puts("Basic Test on Heap Reference PASSED.");
 
-    // return 0;
     int * second_int = test_for_gc_stack_scan();
     void* stack_top = NULL;
     asm volatile ("movq %%rbp, %0" : "=r" (stack_top));
@@ -117,7 +113,11 @@ int main (int argc, char** argv) {
     printf("active memory: %d \n", get_active_mem_include_metadata());
     puts("Stack-scan test DONE");
 
+    // test_heap_reference();
+    // puts("Basic Test on Heap Reference PASSED.");
 
+    // return 0;
+    
     gc_exit();
     return 0;
 }

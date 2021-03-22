@@ -8,10 +8,8 @@
 #include <stdio.h>
 #include <unistd.h>
 /**
- * 
  * Represents a list of objects allocated by the user
  * Heap grows upward to higher memory address
- * 
  * */
 typedef struct metadata {
     // Number of bytes this piece of memory holds (excluding the metadata size)
@@ -28,41 +26,50 @@ typedef struct metadata {
     int marked;
 } metadata;
 
-typedef struct {
-    size_t size; 
-    void* stack_top;    // Tentative member, since the top (lowest sp address) will change across calls.
-    void* stack_bottom; // Where the stack begins;
-    size_t num_items;
-    size_t marked_items;
-    metadata* head;     // Points to the head of the heap memory allocated to user.
-    int initialized;
-} GarbageCollector;
 
 
-/////
+
+/* User uses our version of malloc */
 void *gc_malloc(size_t size);
-void gc_free(void* ptr);
-void Merge_free_neighbor_memory(metadata *meta_ptr);
-void Merge_prev(metadata *meta_ptr);
-void *gc_calloc(size_t num, size_t size);
-void gc_init();
-void gc_exit();
-void scan_and_mark_region(unsigned long *sp, unsigned long *end);
-//static void add_to_free_list(metadata *target);
-void scan_and_mark_heap_ref(void);
-void mark_and_sweep(void);
-int get_sbrk_mem();
-metadata* get_head();
-int get_active_mem_include_metadata();
-void* get_stack_bottom();
-void* gethead();
-/////
-// void add_to_metadata_list(GarbageCollector* gc, metadata* new_metadata, size_t request_size);
-// void *gc_malloc(GarbageCollector* gc, size_t request_size);
-// void *gc_calloc(GarbageCollector* gc, size_t num_elements, size_t element_size);
-// void *gc_realloc(GarbageCollector* gc, void *ptr, size_t request_size);
-// void gc_free(GarbageCollector* gc, void* ptr);
-// void gc_init(GarbageCollector* gc);
 
-// void garbage_collect_start(GarbageCollector *gc, void *stack_initial);
-// void mark_and_sweep(void);
+/* GC's version of free, internal use only and user should not use it. */
+void gc_free(void* ptr);
+
+/* Merge two consecutive free blocks on meta_ptr, if possible */
+void Merge_free_neighbor_memory(metadata *meta_ptr);
+
+/* Helper function of the Merge_free_neighbor_memory and it specifically merges previous free block */
+void Merge_prev(metadata *meta_ptr);
+
+/* Our version of calloc, in users API */
+void *gc_calloc(size_t num, size_t size);
+
+/* Initializes the collector, user must call at the beginning in main. */
+void gc_init();
+
+/* Turn off the garabage collector and free any unreachable memories */
+void gc_exit();
+
+/* Scan a bound of memory address and mark if the value pointed by it is an address in the heap. */
+void scan_and_mark_region(unsigned long *sp, unsigned long *end);
+
+/* Scan through the heap memories the gc had allocated and mark if there is a reference to another heap memory. */
+void scan_and_mark_heap_ref(void);
+
+/* This functions scans the BSS, heap, and stack; then it frees any unreachable variable. */
+void mark_and_sweep(void);
+
+/* Getter for the total sbrk memory. */
+int get_sbrk_mem();
+
+/* Getter for the head. */
+metadata* get_head();
+
+/* Getter for the current active memory that had been allocated to the user. */
+int get_active_mem_include_metadata();
+
+/* Returns the bottom (Highest stack address) of the stack. */
+void* get_stack_bottom();
+
+/* Get the head's memory ptr. */
+void* gethead();
