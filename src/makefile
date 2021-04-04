@@ -1,7 +1,7 @@
 OBJS	= GarbageCollector.o test_data_seg.o
 SOURCE	= GarbageCollector.c test_data_seg.c
 HEADER	= GarbageCollector.h
-OUT	= test
+OUT	= test_data_seg
 CC	 = gcc
 FLAGS	 = -g -c -Wall
 LFLAGS	 = 
