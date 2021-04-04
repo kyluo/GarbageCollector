@@ -24,7 +24,7 @@ static size_t total_sbrk_memory = 0;
 static size_t current_active_memory = 0;
 static uintptr_t stack_bottom;
 static void* heap_begin;
-
+extern end, etext, edata; /* Provided by the linker. */
 // Split the memory block into pieces that the user requested and the remaining piece,
 // then make the linked sequence: ... -> remaining -> old -> ...
 // Return 1 upon success and 0 upon failure
@@ -191,6 +191,9 @@ void gc_init() {
     base.next = &base; 
     base.size = 0;
     printf("heap_ begin:%p\n", heap_begin);
+    printf("    program text segment(etext)      %10p\n", &etext);
+    printf("    initialized data segment(edata)  %10p\n", &edata);
+    printf("    uninitialized data segment (end) %10p\n", &end);
 }
 
 //////////******
@@ -209,13 +212,12 @@ void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
     for (; sp < end; sp++) {
         //printf("current stack address: %p\n", sp);
         current_ptr = head;
-        //unsigned long stack_value = *sp; // 取到sp指向的地址的值
         unsigned long stack_value = *sp;
         while (current_ptr) {
             // If the stack value is an address between current_ptr's memory, mark it.
             if ((uintptr_t)(current_ptr + 1) <= stack_value && stack_value < (uintptr_t)(current_ptr + 1 + current_ptr->size)) {
-                printf("The sp value: %p\n", sp);
-                printf("The stack value: %p\n", (void*) stack_value);
+                // printf("The sp value: %p\n", sp);
+                // printf("The stack value: %p\n", (void*) stack_value);
                 current_ptr->marked = 1;
                 break;
             }
@@ -238,7 +240,7 @@ void scan_and_mark_heap_ref(void) {
         // address in the heap, if it is, mark it.
         
         for (word = (unsigned long *)(current + 1);
-             word < (unsigned long *)(current + current->size + 1);
+             word < (unsigned long *)((void*)(current + 1) + current->size);
              word++) {
             unsigned long address = *word; // get current word's value
             other_heap = head;
@@ -255,34 +257,30 @@ void scan_and_mark_heap_ref(void) {
     }
 }
 
+
 void mark_and_sweep(void) {
     metadata *current_ptr, *prevp, *tp;
     void* stack_top;
-    extern char end, etext, edata; /* Provided by the linker. */
+    
 
     if (head == NULL)
         return;
     
-    /* Scan the BSS and initialized data segments. */
-    // scan_and_mark_region(&etext, &edata);
-    //scan_and_mark_region((unsigned long*)get_etext(), (unsigned long*)get_end());
+    /* Scan the region from address past program text to BSS and initialized data segments. */
+    scan_and_mark_region(&edata, &end); /* Note that if we scan this region, the heap test would fail since it utilizes global variable*/
+    // scan_and_mark_region((unsigned long*)get_etext(), (unsigned long*)get_end());
 
-
+     /* This is an inline assembly code that returns the current LOWEST STACK ADDRESS */
+    asm volatile ("movq %%rbp, %0" : "=r" (stack_top));
     /* Scan the stack. */
-    asm volatile ("movq %%rbp, %0" : "=r" (stack_top)); // Current LOWEST STACK ADDRESS
-    //stack_top = __builtin_return_address(0); 
-
-    printf("The current stack top address outside the test function and inside our mark-and-sweep: %p\n", stack_top);
-    printf("The current stack bottom address outside the test function and inside our mark-and-sweep: %p\n", stack_bottom);
     scan_and_mark_region((unsigned long*) stack_top, (unsigned long*) stack_bottom);
 
     /* Mark from the heap. */
     scan_and_mark_heap_ref();
     
-    /* Sweep */
+    /* Sweep for any unmarked (unreachable) heap memories. */
     for (current_ptr = head; current_ptr != NULL; current_ptr = current_ptr->next) {
         if (!current_ptr->marked) {
-            printf("Current header memory is: %p\n", current_ptr->memory_ptr);
             gc_free(current_ptr->memory_ptr);
             continue;
         }
@@ -293,6 +291,7 @@ void mark_and_sweep(void) {
 void gc_exit() {
     mark_and_sweep();
     sbrk(-1 * total_sbrk_memory);
+    puts("Stack-and-heap scan test DONE");
 }
 
 int get_sbrk_mem() {

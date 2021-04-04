@@ -1,7 +1,7 @@
 OBJS	= GarbageCollector.o test.o
 SOURCE	= GarbageCollector.c test.c
 HEADER	= GarbageCollector.h
-OUT	= ./test
+OUT	= test
 CC	 = gcc
 FLAGS	 = -g -c -Wall
 LFLAGS	 = 
@@ -9,12 +9,18 @@ LFLAGS	 =
 all: $(OBJS)
 	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
 
+
+test_stack_ref: test_stack_ref.o GarbageCollector.o
+	$(CC) -g test_stack_ref.o GarbageCollector.o -o test_stack_ref $(LFLAGS)
+
+test_stack_ref.o: test_stack_ref.c
+	gcc $(FLAGS) test_stack_ref.c
+
 GarbageCollector.o: GarbageCollector.c
 	$(CC) $(FLAGS) GarbageCollector.c 
 
-test.o: test.c
+demo.o: demo.c
 	$(CC) $(FLAGS) test.c 
 
-
 clean:
-	rm -f $(OBJS) $(OUT)
+	rm -f $(OBJS) test_stack_ref.o $(OUT)
