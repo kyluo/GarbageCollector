@@ -1,5 +1,5 @@
-OBJS	= GarbageCollector.o test.o
-SOURCE	= GarbageCollector.c test.c
+OBJS	= GarbageCollector.o test_data_seg.o
+SOURCE	= GarbageCollector.c test_data_seg.c
 HEADER	= GarbageCollector.h
 OUT	= test
 CC	 = gcc
@@ -25,7 +25,7 @@ GarbageCollector.o: GarbageCollector.c
 	$(CC) $(FLAGS) GarbageCollector.c 
 
 demo.o: demo.c
-	$(CC) $(FLAGS) test.c 
+	$(CC) $(FLAGS) test_data_seg.c 
 
 clean:
 	rm -f $(OBJS) test_stack_ref.o $(OUT)

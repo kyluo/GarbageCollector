@@ -291,7 +291,6 @@ void mark_and_sweep(void) {
 void gc_exit() {
     mark_and_sweep();
     sbrk(-1 * total_sbrk_memory);
-    puts("Stack-and-heap scan test DONE");
 }
 
 int get_sbrk_mem() {
