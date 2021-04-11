@@ -1,6 +1,7 @@
 OBJS	= GarbageCollector.o 
 # TESTS = test_stack_ref test_heap_ref test_data_seg
 TESTS = test_stack_ref test_heap_ref test_data_seg
+CLEAN_TARGETS = GarbageCollector.o test_stack_ref.o test_heap_ref.o test_data_seg.o
 SOURCE	= GarbageCollector.c test_data_seg.c
 HEADER	= GarbageCollector.h
 OUT	= test_stack_ref test_heap_ref test_data_seg 
@@ -9,19 +10,7 @@ FLAGS	 = -g -c -Wall
 LFLAGS	 = 
 DIR = tests
 
-# all: $(OBJS)
-# 	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
 tests: $(TESTS)
-	# $(CC) -g test_stack_ref.o GarbageCollector.o -o test_stack_ref $(LFLAGS)
-	# $(CC) -g test_heap_ref.o GarbageCollector.o -o test_heap_ref  $(LFLAGS)
-	# $(CC) -g test_data_seg.o GarbageCollector.o -o test_data_seg  $(LFLAGS)
-
-# all: $(OBJS)
-# 	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
-
-
-
-
 
 test_stack_ref:  GarbageCollector.o test_stack_ref.o
 	$(CC) -g test_stack_ref.o GarbageCollector.o -o test_stack_ref $(LFLAGS)
@@ -51,4 +40,4 @@ helloworld.o: $(DIR)/helloworld.c
 	gcc $(FLAGS) $(DIR)/helloworld.c
 
 clean:
-	rm -f $(OBJS) test_stack_ref.o $(OUT)
+	rm -f $(CLEAN_TARGETS) $(OUT)
