@@ -1,14 +1,14 @@
 OBJS	= GarbageCollector.o 
-# TESTS = test_stack_ref test_heap_ref test_data_seg
-TESTS = test_stack_ref test_heap_ref test_data_seg
-CLEAN_TARGETS = GarbageCollector.o test_stack_ref.o test_heap_ref.o test_data_seg.o
+TESTS = test_stack_ref test_heap_ref test_data_seg test_P
+CLEAN_TARGETS = *.o $(TESTS)
+#GarbageCollector.o test_stack_ref.o test_heap_ref.o test_data_seg.o GarbageCollector_P.o test_P.o callbacks.o vector.o
 SOURCE	= GarbageCollector.c test_data_seg.c
 HEADER	= GarbageCollector.h
-OUT	= test_stack_ref test_heap_ref test_data_seg 
 CC	 = gcc
 FLAGS	 = -g -c -Wall
 LFLAGS	 = 
 DIR = tests
+INCLUDES = includes
 
 tests: $(TESTS)
 
@@ -20,6 +20,9 @@ test_heap_ref: GarbageCollector.o test_heap_ref.o
 
 test_data_seg: GarbageCollector.o test_data_seg.o 
 	$(CC) -g test_data_seg.o GarbageCollector.o -o test_data_seg $(LFLAGS)
+
+test_P:  test_P.o vector.o callbacks.o GarbageCollector_P.o
+	$(CC) -g test_P.o vector.o callbacks.o GarbageCollector_P.o -o  test_P $(LFLAGS)
 
 test_stack_ref.o: $(DIR)/test_stack_ref.c GarbageCollector.h
 	$(CC) $(FLAGS) $(DIR)/test_stack_ref.c
@@ -41,3 +44,17 @@ helloworld.o: $(DIR)/helloworld.c
 
 clean:
 	rm -f $(CLEAN_TARGETS) $(OUT)
+
+
+test_P.o: $(DIR)/test_P.c
+	$(CC) $(FLAGS) $(DIR)/test_P.c 
+
+vector.o: $(INCLUDES)/vector.c
+	$(CC) $(FLAGS) $(INCLUDES)/vector.c 
+
+callbacks.o: $(INCLUDES)/callbacks.c
+	$(CC) $(FLAGS) $(INCLUDES)/callbacks.c 
+
+GarbageCollector_P.o: GarbageCollector_P.c GarbageCollector_P.h
+	$(CC) $(FLAGS) GarbageCollector_P.c 
+

@@ -1,7 +1,8 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "vector.h"
+#include "includes/vector.h"
 
 typedef struct {
     vector* _refs;
@@ -13,6 +14,7 @@ typedef struct {
 typedef struct {
     unsigned long _id;
     unsigned long _memory_id;
+    size_t _addr;
 } reference;
 
 typedef struct {
@@ -33,12 +35,9 @@ void gc_del_ref(GarbageCollector* gc, reference* ref);
 
 void* gc_malloc(GarbageCollector* gc, reference* ref, size_t request_size);
 void* gc_calloc(GarbageCollector* gc, reference* ref, size_t num_elements, size_t element_size);
+void* gc_realloc(GarbageCollector* gc, reference* ref, size_t request_size);
+
 void* gc_deref(GarbageCollector* gc, reference* ref);
+void gc_freeRef(GarbageCollector* gc, reference* ref);
 
 void gc_clean(GarbageCollector* gc);
-
-
-
-
-
-
