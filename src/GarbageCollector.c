@@ -155,7 +155,7 @@ void gc_free(void *ptr) {
         return;
     meta_ptr->is_free = 1;
     current_active_memory -= meta_ptr->size;
-    Merge_free_neighbor_memory(meta_ptr); //
+    Merge_free_neighbor_memory(meta_ptr);
 }
 
 void *gc_calloc(size_t num, size_t size) {
@@ -213,11 +213,13 @@ void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
         //printf("current stack address: %p\n", sp);
         current_ptr = head;
         unsigned long stack_value = *sp;
+        
         while (current_ptr) {
             // If the stack value is an address between current_ptr's memory, mark it.
-            if ((uintptr_t)(current_ptr + 1) <= stack_value && stack_value < (uintptr_t)(current_ptr + 1 + current_ptr->size)) {
+            if ((uintptr_t)(current_ptr + 1) <= stack_value && stack_value < (uintptr_t)(current_ptr + 1) + current_ptr->size) {
                 // printf("The sp value: %p\n", sp);
-                // printf("The stack value: %p\n", (void*) stack_value);
+                printf("The stack value: %p\n", (void*) stack_value);
+                printf("The stack address is : %p\n", sp);
                 current_ptr->marked = 1;
                 break;
             }
@@ -291,7 +293,6 @@ void mark_and_sweep(void) {
 void gc_exit() {
     mark_and_sweep();
     sbrk(-1 * total_sbrk_memory);
-    puts("Stack-and-heap scan test DONE");
 }
 
 int get_sbrk_mem() {

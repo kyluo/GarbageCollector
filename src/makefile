@@ -1,31 +1,60 @@
-OBJS	= GarbageCollector.o test.o
-SOURCE	= GarbageCollector.c test.c
+OBJS	= GarbageCollector.o 
+TESTS = test_stack_ref test_heap_ref test_data_seg test_P
+CLEAN_TARGETS = *.o $(TESTS)
+#GarbageCollector.o test_stack_ref.o test_heap_ref.o test_data_seg.o GarbageCollector_P.o test_P.o callbacks.o vector.o
+SOURCE	= GarbageCollector.c test_data_seg.c
 HEADER	= GarbageCollector.h
-OUT	= test
 CC	 = gcc
 FLAGS	 = -g -c -Wall
 LFLAGS	 = 
+DIR = tests
+INCLUDES = includes
 
-all: $(OBJS)
-	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
+tests: $(TESTS)
 
-
-test_stack_ref: test_stack_ref.o GarbageCollector.o
+test_stack_ref:  GarbageCollector.o test_stack_ref.o
 	$(CC) -g test_stack_ref.o GarbageCollector.o -o test_stack_ref $(LFLAGS)
 
-test_stack_ref.o: test_stack_ref.c
-	gcc $(FLAGS) test_stack_ref.c
-
-test_heap_ref: test_heap_ref.o GarbageCollector.o
+test_heap_ref: GarbageCollector.o test_heap_ref.o
 	$(CC) -g test_heap_ref.o GarbageCollector.o -o test_heap_ref $(LFLAGS)
 
-test_heap_ref.o: test_heap_ref.c 
-	gcc $(FLAGS) test_heap_ref.c
-GarbageCollector.o: GarbageCollector.c
+test_data_seg: GarbageCollector.o test_data_seg.o 
+	$(CC) -g test_data_seg.o GarbageCollector.o -o test_data_seg $(LFLAGS)
+
+test_P:  test_P.o vector.o callbacks.o GarbageCollector_P.o
+	$(CC) -g test_P.o vector.o callbacks.o GarbageCollector_P.o -o  test_P $(LFLAGS)
+
+test_stack_ref.o: $(DIR)/test_stack_ref.c GarbageCollector.h
+	$(CC) $(FLAGS) $(DIR)/test_stack_ref.c
+
+test_heap_ref.o: $(DIR)/test_heap_ref.c GarbageCollector.h
+	$(CC) $(FLAGS) $(DIR)/test_heap_ref.c
+
+test_data_seg.o: $(DIR)/test_data_seg.c GarbageCollector.h
+	$(CC) $(FLAGS) $(DIR)/test_data_seg.c
+
+GarbageCollector.o: GarbageCollector.c GarbageCollector.h 
 	$(CC) $(FLAGS) GarbageCollector.c 
 
-demo.o: demo.c
-	$(CC) $(FLAGS) test.c 
+helloworld : helloworld.o 
+	$(CC) -g helloworld.o -o helloworld
+
+helloworld.o: $(DIR)/helloworld.c 
+	gcc $(FLAGS) $(DIR)/helloworld.c
 
 clean:
-	rm -f $(OBJS) test_stack_ref.o $(OUT)
+	rm -f $(CLEAN_TARGETS) $(OUT)
+
+
+test_P.o: $(DIR)/test_P.c
+	$(CC) $(FLAGS) $(DIR)/test_P.c 
+
+vector.o: $(INCLUDES)/vector.c
+	$(CC) $(FLAGS) $(INCLUDES)/vector.c 
+
+callbacks.o: $(INCLUDES)/callbacks.c
+	$(CC) $(FLAGS) $(INCLUDES)/callbacks.c 
+
+GarbageCollector_P.o: GarbageCollector_P.c GarbageCollector_P.h
+	$(CC) $(FLAGS) GarbageCollector_P.c 
+
