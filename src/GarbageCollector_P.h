@@ -39,5 +39,6 @@ void* gc_realloc(GarbageCollector* gc, reference* ref, size_t request_size);
 
 void* gc_deref(GarbageCollector* gc, reference* ref);
 void gc_freeRef(GarbageCollector* gc, reference* ref);
+void gc_checkHeap(GarbageCollector* gc, reference* ref);
 
 void gc_clean(GarbageCollector* gc);

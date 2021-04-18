@@ -114,6 +114,8 @@ void gc_del_ref(GarbageCollector* gc, reference* ref) {
 }
 
 void* gc_malloc(GarbageCollector* gc, reference* ref, size_t request_size) {
+    gc_clean(gc);
+
     if (!ref) {
         ref = gc_new_ref(gc);
     }
@@ -127,6 +129,7 @@ void* gc_malloc(GarbageCollector* gc, reference* ref, size_t request_size) {
             // fprintf(stderr, "has free memory of request size: %d\n", curr_free->_size);
             if (curr_free->_size == request_size) {
                 // assign memory block to the ref
+                gc_checkHeap(gc, ref);
                 ref->_memory_id = curr_free->_id; 
                 vector_push_back(curr_free->_refs, ref->_id);
 
@@ -172,6 +175,7 @@ void* gc_malloc(GarbageCollector* gc, reference* ref, size_t request_size) {
     }
 
     // remove ref from old metaData
+    // gc_checkHeap(gc, ref);
     metadata* curr_use = gc->_use;
     while(curr_use) {
         // fprintf(stderr, "check remove reference: curr_id: %zu - ref_memory_id: %zu\n", curr_use->_id, ref->_memory_id);
@@ -200,6 +204,31 @@ void* gc_calloc(GarbageCollector* gc, reference* ref, size_t num_elements, size_
     return gc_malloc(gc, ref, num_elements * element_size);
 }
 
+void gc_checkHeap(GarbageCollector* gc, reference* ref) {
+    metadata* curr = gc->_use;
+    while(curr) {
+        if (curr->_id == ref->_memory_id) {
+            break; 
+        }
+        curr = curr->_next;
+    }
+    if (!curr) {
+        return;
+    }
+    ref->_memory_id = 0;
+    size_t start_addr = curr + 1;
+    size_t end_addr = (void*)(curr + 1) + curr->_size;
+    for (size_t curr = start_addr; curr < end_addr; curr+=8) {
+        size_t val = *(size_t*)curr;
+        for (size_t i = 0; i < vector_size(gc->_references); i++) {
+            reference* curr = vector_get(gc->_references, i);
+            if (curr == val) {
+                gc_freeRef(gc, curr);
+            }
+        }
+    }
+}
+
 void* gc_realloc(GarbageCollector* gc, reference* ref, size_t request_size) {
     if (!ref) {
         return gc_malloc(gc, ref, request_size);
@@ -217,17 +246,19 @@ void* gc_realloc(GarbageCollector* gc, reference* ref, size_t request_size) {
 }
 
 void gc_freeRef(GarbageCollector* gc, reference* ref) {
-    metadata* curr_use = gc->_use;
-    while(curr_use) {
-        if (curr_use->_id == ref->_memory_id) {
-            for (size_t i = 0; i < vector_size(curr_use->_refs); i++) {
-                if (vector_get(curr_use->_refs, i) == ref->_id) {
-                    vector_erase(curr_use->_refs, i);
+    metadata* curr = gc->_use;
+    metadata* prev = gc->_use;
+    while(curr) {
+        if (curr->_id == ref->_memory_id) {
+            for (size_t i = 0; i < vector_size(curr->_refs); i++) {
+                if (vector_get(curr->_refs, i) == ref->_id) {
+                    vector_erase(curr->_refs, i);
                 }
             }
             break; 
         }
-        curr_use = curr_use->_next;
+        prev = curr;
+        curr = curr->_next;
     }
     ref->_memory_id = 0;
 }
@@ -237,24 +268,7 @@ void gc_clean(GarbageCollector* gc) {
     metadata* curr = gc->_use;
     metadata* prev = gc->_use;
     while(curr) {
-        // fprintf(stderr, "check curr used block: %d prev: %d\n", curr->_id, prev->_id);
-        // for (size_t i = 0; i < vector_size(curr->_refs); i++) {
-        //     fprintf(stderr, "%d -> ", vector_get(curr->_refs, i));
-        // }
-        // fprintf(stderr, "\n");
         if (vector_size(curr->_refs) == 0) {
-            size_t start_addr = curr + 1;
-            size_t end_addr = (void*)(curr + 1) + curr->_size;
-            fprintf(stderr, "memory block starts at %p, ends at %p, value %d\n", start_addr, end_addr, *(size_t*)start_addr);
-            for (size_t curr = start_addr; curr < end_addr; curr+=8) {
-                size_t val = *(size_t*)curr;
-                for (size_t i = 0; i < vector_size(gc->_references); i++) {
-                    reference* curr = vector_get(gc->_references, i);
-                    if (curr == val) {
-                        gc_freeRef(gc, curr);
-                    }
-                }
-            }
             // fprintf(stderr, "no reff\n");
             metadata* curr_next = curr->_next;
             metadata* head_free = gc->_free;
