@@ -1,6 +1,6 @@
 OBJS	= GarbageCollector.o 
 TESTS = test_stack_ref test_heap_ref test_data_seg test_P
-CLEAN_TARGETS = *.o $(TESTS)
+CLEAN_TARGETS = *.o $(TESTS) demo
 #GarbageCollector.o test_stack_ref.o test_heap_ref.o test_data_seg.o GarbageCollector_P.o test_P.o callbacks.o vector.o
 SOURCE	= GarbageCollector.c test_data_seg.c
 HEADER	= GarbageCollector.h
@@ -36,10 +36,10 @@ test_data_seg.o: $(DIR)/test_data_seg.c GarbageCollector.h
 GarbageCollector.o: GarbageCollector.c GarbageCollector.h 
 	$(CC) $(FLAGS) GarbageCollector.c 
 
-helloworld : helloworld.o 
+helloworld: helloworld.o GarbageCollector.o
 	$(CC) -g helloworld.o -o helloworld
 
-helloworld.o: $(DIR)/helloworld.c 
+helloworld.o: $(DIR)/helloworld.c
 	gcc $(FLAGS) $(DIR)/helloworld.c
 
 clean:
@@ -54,6 +54,12 @@ vector.o: $(INCLUDES)/vector.c
 
 callbacks.o: $(INCLUDES)/callbacks.c
 	$(CC) $(FLAGS) $(INCLUDES)/callbacks.c 
+
+demo: demo.o 
+	$(CC) -g demo.o -o demo $(LFLAGS)
+
+demo.o: demo.c
+	$(CC) $(FLAGS) demo.c
 
 GarbageCollector_P.o: GarbageCollector_P.c GarbageCollector_P.h
 	$(CC) $(FLAGS) GarbageCollector_P.c 
