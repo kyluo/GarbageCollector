@@ -126,12 +126,7 @@ In the reference-counting version, the special pointer will keep track of the me
 the memory block will keep track of how many reference (pointer) that points to it. When there is no more pointer points to the memory block
 the memory block will be automatically freed.
 
-## Limitations
-For reference-counting, it could not auto detect and delete the stack stored special pointer and it needs to be manually deleted if the user wants to free more space.
-But since the user might reuse the memory allocated pointer in different functions, such as buffer and temp, limitation in unable to free stack pointer after function
-returns will be minimized.
-
-### Basic usage (Reference-counting)
+#### Basic usage (Reference-counting)
 ```c
 #include "../GarbageCollector_P.h"
 int main(...) {
@@ -150,6 +145,13 @@ int main(...) {
 }
 
 ```
+
+## Limitations
+For reference-counting, it could not auto detect and delete the stack stored special pointer and it needs to be manually deleted if the user wants to free more space.
+But since the user might reuse the memory allocated pointer in different functions, such as buffer and temp, limitation in unable to free stack pointer after function
+returns will be minimized.
+
+
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 * [Mark-and-Sweep Algorithm](https://www.geeksforgeeks.org/mark-and-sweep-garbage-collection-algorithm/)
