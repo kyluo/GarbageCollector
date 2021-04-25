@@ -34,8 +34,9 @@ if data is unreachable:<br/>
 ignore the unreachable memory and malloc new memory as user request<br/>
 or<br/>
 check if there is memory block that can be used for future memory request<br/> -->
-# Garbage Collect: mark & sweep and reference-counting garbage collection for C
+# Garbage Collector: Mark & Sweep and Reference-Counting garbage collection for C
 ## Project Members: Ruipeng Han, Kaiyuan Luo
+## Project Mentor: David James
 
 This program is an implementation of a conservative, thread-local, mark-and-sweep and referece-counting
 garbage collector. The implementation provides a fully functional replacement
@@ -125,23 +126,31 @@ In the reference-counting version, the special pointer will keep track of the me
 the memory block will keep track of how many reference (pointer) that points to it. When there is no more pointer points to the memory block
 the memory block will be automatically freed.
 
-## Limitation
+## Limitations
 For reference-counting, it could not auto detect and delete the stack stored special pointer and it needs to be manually deleted if the user wants to free more space.
 But since the user might reuse the memory allocated pointer in different functions, such as buffer and temp, limitation in unable to free stack pointer after function
 returns will be minimized.
 
-## Basic usage (Reference-counting)
+### Basic usage (Reference-counting)
 ```c
-GarbageCollector* g = gc_start();
-// initialze the garbage collector
-reference* r1 = gc_new_ref(g);
-// create a new special pointer
-int* p1 = gc_malloc(g, r1, sizeof(int));
-// user can freely malloc new spaces
-gc_copy_ref(g, r1, r2);
-// copy the content from one pointer to another
-gc_swtich_ref(g, r2, r3);
-// swap the content between two pointer, similar to swap funciton
-gc_end(g);
-// automatically free any allocated memory 
+#include "../GarbageCollector_P.h"
+int main(...) {
+    GarbageCollector* g = gc_start();
+    // initialze the garbage collector
+    reference* r1 = gc_new_ref(g);
+    // create a new special pointer
+    int* p1 = gc_malloc(g, r1, sizeof(int));
+    // user can freely malloc new spaces
+    gc_copy_ref(g, r1, r2);
+    // copy the content from one pointer to another
+    gc_swtich_ref(g, r2, r3);
+    // swap the content between two pointer, similar to swap funciton
+    gc_end(g);
+    // automatically free any allocated memory 
+}
+
 ```
+<!-- ACKNOWLEDGEMENTS -->
+## Acknowledgements
+* [Mark-and-Sweep Algorithm](https://www.geeksforgeeks.org/mark-and-sweep-garbage-collection-algorithm/)
+* [Writing a Simple Garbage Collector in C](https://maplant.com/gc.html#org8125f7d)
