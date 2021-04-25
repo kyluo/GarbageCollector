@@ -90,3 +90,29 @@ int main(int argc, char* argv[]) {
 ```
 
 ### Basic usage (Reference-Counting Version)
+For reference-counting version, it utilize the pointer wrapper which user have to explicitly declear the special pointer.
+In the reference-counting version, the special pointer will keep track of the memory block each pointer points to and 
+the memory block will keep track of how many reference (pointer) that points to it. When there is no more pointer points to the memory block
+the memory block will be automatically freed.
+
+## Limitation
+For reference-counting, it could not auto detect and delete the stack stored special pointer and it needs to be manually deleted if the user wants to free more space.
+But since the user might reuse the memory allocated pointer in different functions, such as buffer and temp, limitation in unable to free stack pointer after function
+returns will be minimized.
+
+## Usage
+```c
+GarbageCollector* g = gc_start();
+// initialze the garbage collector
+reference* r1 = gc_new_ref(g);
+// create a new special pointer
+int* p1 = gc_malloc(g, r1, sizeof(int));
+// user can freely malloc new spaces
+gc_copy_ref(g, r1, r2);
+// copy the content from one pointer to another
+gc_swtich_ref(g, r2, r3);
+// swap the content between two pointer, similar to swap funciton
+gc_end(g);
+// automatically free any allocated memory 
+```
+
