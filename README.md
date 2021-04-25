@@ -37,7 +37,7 @@ check if there is memory block that can be used for future memory request<br/> -
 # Garbage Collect: mark & sweep and reference-counting garbage collection for C
 ## Project Members: Ruipeng Han, Kaiyuan Luo
 
-This program is an implementation of a conservative, thread-local, mark-and-sweep
+This program is an implementation of a conservative, thread-local, mark-and-sweep and referece-counting
 garbage collector. The implementation provides a fully functional replacement
 for the standard POSIX `malloc()`, `calloc()`, `realloc()`, and `free()` calls.
 
@@ -90,3 +90,38 @@ int main(int argc, char* argv[]) {
 ```
 
 ### Basic usage (Reference-Counting Version)
+
+
+### Data Structures
+
+The core data structure inside of the Garbage Collecter is a struct that holds the metadata information of
+allocated memory. 
+
+```c
+typedef struct metadata {
+    // Number of bytes this piece of memory holds (excluding the metadata size)
+    void* memory_ptr;
+    // Number of bytes this piece of memory holds (excluding the metadata size)
+    size_t size;
+    // Pointer to the next instance of meta_data in the list
+    struct metadata *next;
+    // Pointer to the next instance of meta_data in the list
+    struct metadata *prev;
+    // The flag for sweep (1 means in use, 0 means free)
+    int is_free;
+    // The flag for sweep (1 means in use, 0 means free)
+    int marked;
+} metadata;
+```
+
+### The Mark-and-Sweep Algorithm
+
+The naïve mark-and-sweep algorithm runs in two stages. First, in a *mark*
+stage, the algorithm finds and marks all *root* allocations and all allocations
+that are reachable from the roots.  Second, in the *sweep* stage, the algorithm
+passes over all known allocations, collecting all allocations that were not
+marked and are therefore deemed unreachable.
+
+### The Reference-Counting Algorithm
+
+
