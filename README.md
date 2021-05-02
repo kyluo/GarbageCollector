@@ -40,22 +40,23 @@ check if there is memory block that can be used for future memory request<br/> -
 
 This program is an implementation of a conservative, thread-local, mark-and-sweep and referece-counting
 garbage collector. The implementation provides a fully functional replacement
-for the standard POSIX `malloc()`, `calloc()`, `realloc()`, and `free()` calls.
+for the standard POSIX `malloc()`, `calloc()`, `realloc()`, and `free()` calls. 64-bit system.
 
 ## Quickstart
-
+### Environment Requirment
+This program can only run under a Linux environment (Ubuntu, Debian, etc) 64-bit system.
 ### Download, compile and test
 
     $ git clone https://github.com/kyluo/GarbageCollector.git
     $ cd src
     
-To compile using the `clang` compiler:
+To use the GNU Compiler Collection (GCC):
 
     $ make test or make
     
-To use the GNU Compiler Collection (GCC):
+To compile using the `clang` compiler:
 
-    $ make test CC=gcc
+    $ make test CC=clang
     
 These tests should complete successfully. To create the current coverage report:
 
@@ -72,7 +73,7 @@ These tests should complete successfully. To create the current coverage report:
 
 void some_fun() {
     ...
-    int* my_array = gc_calloc(&gc, 1024, sizeof(int));
+    int* my_array = gc_calloc(1024, sizeof(int));
     for (size_t i=0; i<1024; ++i) {
         my_array[i] = 42;
     }
@@ -150,6 +151,10 @@ int main(...) {
 }
 
 ```
+
+### Usage Warning:
+This garbage collector works as a complete replacement of the standard POSIX `malloc()`, `calloc()` calls, etc; making these calls will result in undefined behavior. Please only use the API that garbage collector has provided (`gc_malloc()`, `gc_calloc()`,etc) when allocating memories. 
+
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 * [Mark-and-Sweep Algorithm](https://www.geeksforgeeks.org/mark-and-sweep-garbage-collection-algorithm/)
