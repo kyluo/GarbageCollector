@@ -78,7 +78,7 @@ void some_fun() {
         my_array[i] = 42;
     }
     ...
-    // look ya, no free!
+    // No free() needed!
 }
 
 int main(int argc, char* argv[]) {
