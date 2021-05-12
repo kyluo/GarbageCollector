@@ -13,7 +13,7 @@ INCLUDES = includes
 tests: $(TESTS)
 
 mark_and_sweep: GarbageCollector.o mark_and_sweep_demo.o 
-	$(CC) -g  mark_and_sweep_demo.o -o mark_and_sweep $(LFLAGS)
+	$(CC) -g  mark_and_sweep_demo.o GarbageCollector.o -o mark_and_sweep $(LFLAGS)
 
 test_stack_ref:  GarbageCollector.o test_stack_ref.o
 	$(CC) -g test_stack_ref.o GarbageCollector.o -o test_stack_ref $(LFLAGS)

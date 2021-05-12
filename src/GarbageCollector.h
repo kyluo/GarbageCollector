@@ -51,7 +51,7 @@ void gc_init();
 void gc_exit();
 
 /* Scan a bound of memory address and mark if the value pointed by it is an address in the heap. */
-void scan_and_mark_region(unsigned long *sp, unsigned long *end);
+void scan_and_mark_region(unsigned long *sp, unsigned long *end, const char *scope);
 
 /* Scan through the heap memories the gc had allocated and mark if there is a reference to another heap memory. */
 void scan_and_mark_heap_ref(void);

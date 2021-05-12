@@ -3,16 +3,8 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
-//#include <mach-o/getsect.h>
 /* The size of a pointer. */
 #define PTRSIZE sizeof(char*)
-/*
- * Support for windows c compiler is added by adding this macro.
- * Tested on: Microsoft (R) C/C++ Optimizing Compiler Version 19.24.28314 for x86
- */
-// #if defined(_MSC_VER)
-// #define __builtin_frame_address(x)  ((void)(x), _AddressOfReturnAddress())
-// #endif
 
 #define LAST_BIT_MASK(p) ((((uintptr_t) p)  >> 1) << 1) // make last bit 0.
 
@@ -148,7 +140,7 @@ void Merge_free_neighbor_memory(metadata *meta_ptr) {
 
 void gc_free(void *ptr) {
     if (ptr == NULL) return;
-    printf("value of ptr being freed is: %p\n",ptr);
+    printf("    Pointer being freed is: \x1b[33m%p\033[0;37m\n",ptr);
     metadata *meta_ptr = (metadata*) ptr - 1;
     if (meta_ptr->is_free == 1)
         return;
@@ -189,36 +181,33 @@ void gc_init() {
     head = NULL;
     base.next = &base; 
     base.size = 0;
-    printf("heap_ begin:%p\n", heap_begin);
-    printf("    program text segment(etext)      %10p\n", &etext);
-    printf("    initialized data segment(edata)  %10p\n", &edata);
-    printf("    uninitialized data segment (end) %10p\n", &end);
+    printf("\n    \033[0;32mInitial Heap Address: %p\n", heap_begin);
+    printf("    Program text segment(etext)      %10p\n", &etext);
+    printf("    Initialized data segment(edata)  %10p\n", &edata);
+    printf("    Uninitialized data segment (BSS) %10p\033[0;37m\n\n", &end);
 }
 
-//////////******
 /*
  * Scan a region of memory and mark any items in the used list appropriately.
  * Both arguments should be word aligned.
+ * Being marked means that it is still reachable.
  */
-void scan_and_mark_region(unsigned long *sp, unsigned long *end) {
-    if (head == NULL)
+void scan_and_mark_region(unsigned long *sp, unsigned long *end, const char *scope) {
+    printf("    \x1b[35mMARK-AND-SWEEP:\033[0;37m Scanning %s address from: \033[1;32m%p   to   %p\033[0;37m\n", scope, sp, end);
+    if (head == NULL)   
         return;
     metadata *current_ptr = head;
     sp = ((uintptr_t)sp >> 3) << 3;
-    //printf("Stack begin: %p, end: %p\n", sp, end);
-    
-    // for each addresses (each 8 byte), see if the value pointed by it matches one in the used list.
+
     for (; sp < end; sp++) {
-        //printf("current stack address: %p\n", sp);
+        /* for each addresses (each 8 byte), see if the value pointed by it matches one in the used list. */
         current_ptr = head;
-        unsigned long stack_value = *sp;
-        
+        unsigned long value_pointed_at = *sp;
         while (current_ptr) {
-            // If the stack value is an address between current_ptr's memory, mark it.
-            if ((uintptr_t)(current_ptr + 1) <= stack_value && stack_value < (uintptr_t)(current_ptr + 1) + current_ptr->size) {
-                // printf("The sp value: %p\n", sp);
-                printf("The stack value: %p\n", (void*) stack_value);
-                printf("The stack address is : %p\n", sp);
+            /* If the address is in between current_ptr's memory, mark it. */
+            if ((uintptr_t)(current_ptr + 1) <= value_pointed_at && value_pointed_at < (uintptr_t)(current_ptr + 1) + current_ptr->size) {
+                printf("    The heap address \x1b[34m%p\033[0;37m is reachable\n", (void*) value_pointed_at);
+                // printf("    The  address is : %p\n", sp);
                 current_ptr->marked = 1;
                 break;
             }
@@ -260,21 +249,18 @@ void scan_and_mark_heap_ref(void) {
 
 
 void mark_and_sweep(void) {
-    metadata *current_ptr, *prevp, *tp;
+    metadata *current_ptr;
     void* stack_top;
-    
-
     if (head == NULL)
         return;
     
     /* Scan the region from address past program text to BSS and initialized data segments. */
-    scan_and_mark_region(&edata, &end); /* Note that if we scan this region, the heap test would fail since it utilizes global variable*/
-    // scan_and_mark_region((unsigned long*)get_etext(), (unsigned long*)get_end());
-
-     /* This is an inline assembly code that returns the current LOWEST STACK ADDRESS */
+    scan_and_mark_region(&edata, &end, "data-segment"); /* Note that if we scan this region, the heap test would fail since it utilizes global variable*/
+    
+     /* This is an inline assembly code that gets the current LOWEST STACK ADDRESS */
     asm volatile ("movq %%rbp, %0" : "=r" (stack_top));
     /* Scan the stack. */
-    scan_and_mark_region((unsigned long*) stack_top, (unsigned long*) stack_bottom);
+    scan_and_mark_region((unsigned long*) stack_top, (unsigned long*) stack_bottom, "stack");
 
     /* Mark from the heap. */
     scan_and_mark_heap_ref();
