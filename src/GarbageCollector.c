@@ -4,9 +4,7 @@
 #include <assert.h>
 #include <stdint.h>
 //#include <mach-o/getsect.h>
-/*
- * The size of a pointer.
- */
+/* The size of a pointer. */
 #define PTRSIZE sizeof(char*)
 /*
  * Support for windows c compiler is added by adding this macro.
@@ -25,12 +23,12 @@ static size_t current_active_memory = 0;
 static uintptr_t stack_bottom;
 static void* heap_begin;
 extern end, etext, edata; /* Provided by the linker. */
+
 // Split the memory block into pieces that the user requested and the remaining piece,
 // then make the linked sequence: ... -> remaining -> old -> ...
 // Return 1 upon success and 0 upon failure
 int splitBlock(size_t size, metadata *entry) {
     if (entry->size >= 2 * size && (entry->size-size) >= 1024) {
-
         metadata *new_entry = entry->memory_ptr + size; // Make a metdata for the new, free memory
         // update the new metadata's memory ptr, free, new size, and new next (the allocated memory)
         new_entry->memory_ptr = (new_entry + 1); 
@@ -53,6 +51,7 @@ int splitBlock(size_t size, metadata *entry) {
 
 /**
  *  Implementation of malloc using sbrk.
+ *  Return a pointer to heap address available for use.
  * */
 void *gc_malloc(size_t size) {
     // implement malloc!

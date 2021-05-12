@@ -1,5 +1,5 @@
 OBJS	= GarbageCollector.o 
-TESTS = test_stack_ref test_heap_ref test_data_seg test_P
+TESTS = mark_and_sweep test_stack_ref test_heap_ref test_data_seg test_P
 CLEAN_TARGETS = *.o $(TESTS)
 #GarbageCollector.o test_stack_ref.o test_heap_ref.o test_data_seg.o GarbageCollector_P.o test_P.o callbacks.o vector.o
 SOURCE	= GarbageCollector.c test_data_seg.c
@@ -11,6 +11,9 @@ DIR = tests
 INCLUDES = includes
 
 tests: $(TESTS)
+
+mark_and_sweep: GarbageCollector.o mark_and_sweep_demo.o 
+	$(CC) -g  mark_and_sweep_demo.o -o mark_and_sweep $(LFLAGS)
 
 test_stack_ref:  GarbageCollector.o test_stack_ref.o
 	$(CC) -g test_stack_ref.o GarbageCollector.o -o test_stack_ref $(LFLAGS)
@@ -45,6 +48,8 @@ helloworld.o: $(DIR)/helloworld.c
 clean:
 	rm -f $(CLEAN_TARGETS) $(OUT)
 
+mark-and-sweep.o:
+	$(CC) $(FLAGS) mark_and_sweep_demo.c 
 
 test_P.o: $(DIR)/test_P.c
 	$(CC) $(FLAGS) $(DIR)/test_P.c 
