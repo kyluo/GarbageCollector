@@ -10,9 +10,9 @@ int *global_int;
 /* Mark-and-Sweep Demo Program */
 int main(int argc, char **args) {
     gc_init();
-    my_func(); /* After adding the stack ptr back to main, random_integer is no longer reachable.*/
-    my_func2();
-    // my_func3();
+   //my_func(); /* After adding the stack ptr back to main, random_integer is no longer reachable.*/
+    // my_func2();
+    my_func3();
     gc_exit();
     return 0;
 }
@@ -37,6 +37,7 @@ void my_func3() {
     char ** string = gc_malloc(3 * sizeof(char*));
     for (int i = 0; i < 3; i++) {
         string[i] = gc_malloc(sizeof(char));
+        string[i] = 0; /* Oppos, a leak would happen here. */
     }
 }
 
