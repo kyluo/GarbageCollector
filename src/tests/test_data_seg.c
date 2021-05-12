@@ -2,7 +2,6 @@
 #include <string.h>
 #include "../GarbageCollector.h"
 #include <assert.h>
-// #include "test-utils.h"
 
 void* ptr1 = NULL;
 void* ptr2 = NULL;

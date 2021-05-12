@@ -49,7 +49,7 @@ void *gc_malloc(size_t size) {
     // implement malloc!
     if (size == 0)
         return NULL;
-    //mark_and_sweep();
+    // mark_and_sweep();
     metadata* current_block = head;
     metadata* valid_block_memory = NULL;
     // if there are enough memory available:
@@ -207,7 +207,6 @@ void scan_and_mark_region(unsigned long *sp, unsigned long *end, const char *sco
             /* If the address is in between current_ptr's memory, mark it. */
             if ((uintptr_t)(current_ptr + 1) <= value_pointed_at && value_pointed_at < (uintptr_t)(current_ptr + 1) + current_ptr->size) {
                 printf("    The heap address \x1b[34m%p\033[0;37m is reachable\n", (void*) value_pointed_at);
-                // printf("    The  address is : %p\n", sp);
                 current_ptr->marked = 1;
                 break;
             }
